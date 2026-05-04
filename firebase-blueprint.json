@@ -1,0 +1,33 @@
+{
+  "entities": {
+    "Cliente": {
+      "title": "Cliente",
+      "description": "Información de un cliente guardado por un usuario.",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string", "description": "Nombre completo del cliente" },
+        "telefono": { "type": "string", "description": "Teléfono de contacto" },
+        "notas": { "type": "string", "description": "Notas adicionales sobre el cliente" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Fecha de creación automática" },
+        "createdBy": { "type": "string", "description": "UID del usuario que creó el registro" },
+        "creatorEmail": { "type": "string", "description": "Email del usuario que creó el registro" }
+      },
+      "required": ["nombre", "telefono", "createdAt", "createdBy", "creatorEmail"]
+    }
+  },
+  "firestore": {
+    "/clientes/{clienteId}": {
+      "schema": "Cliente",
+      "description": "Colección de clientes."
+    },
+    "/authorizedUsers/{email}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "authorized": { "type": "boolean" }
+        }
+      },
+      "description": "Lista blanca de correos autorizados."
+    }
+  }
+}

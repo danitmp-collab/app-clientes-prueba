@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Default safety net: Deny all by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 3. Primitives
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAuthorized() {
+      return isSignedIn() && exists(/databases/$(database)/documents/authorizedUsers/$(request.auth.token.email));
+    }
+
+    // 2. Validation Blueprints
+    function isValidCliente(data) {
+      return data.keys().hasAll(['nombre', 'telefono', 'notas', 'createdAt', 'createdBy', 'creatorEmail'])
+        && data.keys().size() == 6
+        && data.nombre is string && data.nombre.size() > 0 && data.nombre.size() <= 100
+        && data.telefono is string && data.telefono.size() > 0 && data.telefono.size() <= 30
+        && data.notas is string && data.notas.size() <= 1000
+        && data.createdAt == request.time
+        && data.createdBy == request.auth.uid
+        && data.creatorEmail == request.auth.token.email;
+    }
+
+    // Authorization collection
+    match /authorizedUsers/{email} {
+      allow read: if isSignedIn() && request.auth.token.email == email;
+      allow write: if false; // Only manageable via Firebase Console or Admin
+    }
+
+    // Main collection rules
+    match /clientes/{clienteId} {
+      // Create: user must be signed in, authorized, and data must be valid
+      allow create: if isAuthorized() 
+        && isValidId(clienteId) 
+        && isValidCliente(incoming());
+
+      // Read: user can only see their own clients if authorized
+      allow read: if isAuthorized() 
+        && resource.data.createdBy == request.auth.uid;
+      
+      // Delete: Only authorized owner can delete
+      allow delete: if isAuthorized() && resource.data.createdBy == request.auth.uid;
+    }
+  }
+}

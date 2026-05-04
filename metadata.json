@@ -1,0 +1,6 @@
+{
+  "name": "App Prueba Clientes",
+  "description": "Una aplicación sencilla para gestionar clientes con autenticación de Google y almacenamiento en Firebase Firestore, permitiendo la exportación de datos y diagnóstico de usuario.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
